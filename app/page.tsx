@@ -151,12 +151,13 @@ export default function Home() {
       style={{
         display: "flex",
         justifyContent: "center",
-        alignItems: "flex-end",
+        alignItems: "center",
         height: "100vh",
         flexDirection: "column",
         position: "relative",
       }}
     >
+      {/* Play Button Centered */}
       {!gameStarted && !gameOver && (
         <button
           onClick={startGame}
@@ -167,7 +168,8 @@ export default function Home() {
             color: "white",
             borderRadius: "10px",
             cursor: "pointer",
-            marginBottom: "50px",
+            position: "absolute",
+            zIndex: 10,
           }}
         >
           Play
@@ -181,6 +183,7 @@ export default function Home() {
         style={{ border: "2px solid white", background: "#111" }}
       />
 
+      {/* Game Over Overlay */}
       {gameOver && (
         <div
           style={{
@@ -202,7 +205,7 @@ export default function Home() {
           <button
             onClick={() => {
               setGameStarted(false);
-              setTimeout(() => startGame(), 50);
+              setTimeout(() => startGame(), 50); // Restart game
             }}
             style={{
               marginTop: "20px",
