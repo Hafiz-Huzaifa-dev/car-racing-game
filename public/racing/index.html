@@ -1,0 +1,135 @@
+"use client";
+import { useEffect, useRef } from "react";
+
+export default function Home() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const roadWidth = 400;
+    const laneCount = 3;
+    const laneWidth = roadWidth / laneCount;
+
+    const carWidth = 50;
+    const carHeight = 80;
+    let carLane = 1;
+    let carX = carLane * laneWidth + (laneWidth - carWidth) / 2;
+    const carY = 500;
+
+    let obstacles: { x: number; y: number; w: number; h: number; color: string }[] = [];
+    let score = 0;
+    let speed = 4;
+    let gameOver = false;
+
+    // Keyboard controls
+    window.addEventListener("keydown", (e) => {
+      if (gameOver) return;
+      if (e.key === "ArrowLeft" && carLane > 0) carLane--;
+      if (e.key === "ArrowRight" && carLane < laneCount - 1) carLane++;
+      carX = carLane * laneWidth + (laneWidth - carWidth) / 2;
+      e.preventDefault();
+    });
+
+    // Mobile swipe
+    let touchStartX: number | null = null;
+    canvas.addEventListener("touchstart", (e) => (touchStartX = e.touches[0].clientX));
+    canvas.addEventListener("touchmove", (e) => e.preventDefault());
+    canvas.addEventListener("touchend", (e) => {
+      if (gameOver) return;
+      let deltaX = e.changedTouches[0].clientX - (touchStartX || 0);
+      if (deltaX > 30 && carLane < laneCount - 1) carLane++;
+      if (deltaX < -30 && carLane > 0) carLane--;
+      carX = carLane * laneWidth + (laneWidth - carWidth) / 2;
+    });
+
+    // Spawn obstacles
+    function spawnObstacle() {
+      const lane = Math.floor(Math.random() * laneCount);
+      const types = ["yellow", "orange", "purple"];
+      const color = types[Math.floor(Math.random() * types.length)];
+      obstacles.push({
+        x: lane * laneWidth + (laneWidth - carWidth) / 2,
+        y: -60,
+        w: carWidth,
+        h: 60,
+        color,
+      });
+    }
+
+    // Draw functions
+    function drawRoad() {
+      ctx.fillStyle = "#333";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      for (let i = 1; i < laneCount; i++) {
+        ctx.setLineDash([20, 15]);
+        ctx.beginPath();
+        ctx.moveTo(i * laneWidth, 0);
+        ctx.lineTo(i * laneWidth, canvas.height);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+
+    function drawCar() {
+      ctx.fillStyle = `hsl(${(Date.now() / 5) % 360}, 100%, 50%)`;
+      ctx.fillRect(carX, carY, carWidth, carHeight);
+    }
+
+    function drawObstacles() {
+      obstacles.forEach((o) => {
+        o.y += speed;
+        ctx.fillStyle = o.color;
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+
+        if (carX < o.x + o.w && carX + carWidth > o.x && carY < o.y + o.h && carY + carHeight > o.y) {
+          gameOver = true;
+        }
+      });
+      obstacles = obstacles.filter((o) => o.y < canvas.height);
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 25);
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawRoad();
+      drawCar();
+      drawObstacles();
+      drawScore();
+
+      if (gameOver) {
+        ctx.fillStyle = "red";
+        ctx.font = "30px Arial";
+        ctx.fillText("CRASH! Score:" + score, 40, canvas.height / 2);
+        ctx.font = "18px Arial";
+        ctx.fillText("Click to Restart", 90, canvas.height / 2 + 40);
+        return;
+      }
+
+      score++;
+      if (score % 500 === 0) speed += 0.5;
+      requestAnimationFrame(gameLoop);
+    }
+
+    canvas.addEventListener("click", () => {
+      if (gameOver) location.reload();
+    });
+
+    const spawnInterval = setInterval(spawnObstacle, 1200);
+    gameLoop();
+
+    return () => clearInterval(spawnInterval);
+  }, []);
+
+  return <canvas ref={canvasRef} width={400} height={600} />;
+}
