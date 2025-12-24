@@ -7,7 +7,7 @@ export default function Home() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
-  const spawnIntervalRef = useRef<NodeJS.Timer | null>(null);
+  const spawnIntervalRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
   const startGame = () => {
@@ -65,7 +65,7 @@ export default function Home() {
     canvas.addEventListener("touchend", touchEnd);
 
     // Spawn obstacles
-    function spawnObstacle() {
+    const spawnObstacle = () => {
       const lane = Math.floor(Math.random() * laneCount);
       const colors = ["yellow", "orange", "purple"];
       const color = colors[Math.floor(Math.random() * colors.length)];
@@ -76,7 +76,7 @@ export default function Home() {
         h: 60,
         color,
       });
-    }
+    };
 
     // Draw functions
     const drawRoad = () => {
@@ -133,11 +133,11 @@ export default function Home() {
       animationFrameRef.current = requestAnimationFrame(gameLoop);
     };
 
-    spawnIntervalRef.current = setInterval(spawnObstacle, 1200);
+    spawnIntervalRef.current = window.setInterval(spawnObstacle, 1200);
     gameLoop();
 
     return () => {
-      if (spawnIntervalRef.current) clearInterval(spawnIntervalRef.current);
+      if (spawnIntervalRef.current) window.clearInterval(spawnIntervalRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       window.removeEventListener("keydown", keyHandler);
       canvas.removeEventListener("touchstart", touchStart);
@@ -151,7 +151,7 @@ export default function Home() {
       style={{
         display: "flex",
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "flex-end",
         height: "100vh",
         flexDirection: "column",
         position: "relative",
@@ -167,13 +167,19 @@ export default function Home() {
             color: "white",
             borderRadius: "10px",
             cursor: "pointer",
-            zIndex: 10,
+            marginBottom: "50px",
           }}
         >
           Play
         </button>
       )}
-      <canvas ref={canvasRef} width={400} height={600} style={{ border: "2px solid white" }} />
+
+      <canvas
+        ref={canvasRef}
+        width={400}
+        height={600}
+        style={{ border: "2px solid white", background: "#111" }}
+      />
 
       {gameOver && (
         <div
@@ -196,7 +202,7 @@ export default function Home() {
           <button
             onClick={() => {
               setGameStarted(false);
-              setTimeout(() => startGame(), 50); // reset game state
+              setTimeout(() => startGame(), 50);
             }}
             style={{
               marginTop: "20px",
